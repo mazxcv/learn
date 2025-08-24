@@ -1,0 +1,128 @@
+package wordy
+
+import (
+	"fmt"
+	"regexp"
+	"strconv"
+	"strings"
+)
+
+type Lexer struct {
+}
+
+// func Answer Parse and evaluate simple math word problems returning the answer as an integer
+// What is 3 plus 2 multiplied by 3?
+func Answer(question string) (res int, ok bool) {
+	if !strings.HasPrefix(question, "What is ") {
+		return
+	}
+
+	question = strings.TrimPrefix(question, "What is ")
+	question = strings.Trim(question, "?")
+	question = strings.ReplaceAll(question, "divided by", "dividedby")
+	question = strings.ReplaceAll(question, "multiplied by", "multipliedby")
+
+	if res, err := strconv.Atoi(question); err == nil {
+		return res, true
+	}
+
+	re := regexp.MustCompile(`[+-/*\d]`)
+	if !re.MatchString(question) {
+		return
+	}
+
+	if question, ok = DividePrepare(question); !ok {
+		return 0, false
+	}
+	if question, ok = MultiplyPrepare(question); !ok {
+		return 0, false
+	}
+	if question, ok = MinusPrepare(question); !ok {
+		return 0, false
+	}
+	if question, ok = PlusPrepare(question); !ok {
+		return 0, false
+	}
+
+	res, err := strconv.Atoi(question)
+	if err != nil {
+		return 0, false
+	}
+	return res, true
+}
+
+// old variant
+func MinusPrepare(question string) (string, bool) {
+	re := regexp.MustCompile(`(\-?\d+\s*minus\s*\-?\d+)`)
+	if re.MatchString(question) {
+		v := re.FindString(question)
+		params, ok := GetParams(v, "minus")
+		if !ok {
+			return "", false
+		}
+		question = strings.ReplaceAll(question, v, fmt.Sprintf("%s plus %s", strconv.Itoa(params[0]), strconv.Itoa(-params[1])))
+		return MinusPrepare(question)
+	}
+	return question, true
+}
+
+func PlusPrepare(question string) (string, bool) {
+	re := regexp.MustCompile(`(\-?\d+\s*plus\s*\-?\d+)`)
+	if re.MatchString(question) {
+		v := re.FindString(question)
+		params, ok := GetParams(v, "plus")
+		if !ok {
+			return "", false
+		}
+		question = strings.ReplaceAll(question, v, strconv.Itoa(params[0]+params[1]))
+		return PlusPrepare(question)
+	}
+	return question, true
+
+}
+
+func MultiplyPrepare(question string) (string, bool) {
+	re := regexp.MustCompile(`(\-?\d+\s*multipliedby\s*\-?\d+)`)
+	if re.MatchString(question) {
+		v := re.FindString(question)
+		params, ok := GetParams(v, "multipliedby")
+		if !ok {
+			return "", false
+		}
+		question = strings.ReplaceAll(question, v, strconv.Itoa(params[0]*params[1]))
+		return MultiplyPrepare(question)
+	}
+	return question, true
+}
+
+func DividePrepare(question string) (string, bool) {
+	re := regexp.MustCompile(`(\-?\d+\s*dividedby\s*\-?\d+)`)
+	if re.MatchString(question) {
+		v := re.FindString(question)
+		params, ok := GetParams(v, "dividedby")
+		if !ok {
+			return "", false
+		}
+		question = strings.ReplaceAll(question, v, strconv.Itoa(params[0]/params[1]))
+		return DividePrepare(question)
+	}
+	return question, true
+}
+
+func GetParams(questions string, delimeter string) ([]int, bool) {
+	paramsString := strings.Split(questions, delimeter)
+	if len(paramsString) != 2 {
+		return []int{}, false
+	} else {
+		params := []int{}
+		for _, v := range paramsString {
+			p, err := strconv.Atoi(strings.TrimSpace(v))
+			if err != nil {
+				return []int{}, false
+			}
+			params = append(params, p)
+		}
+
+		return params, true
+	}
+}

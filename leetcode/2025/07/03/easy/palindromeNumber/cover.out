@@ -1,0 +1,9 @@
+mode: set
+palindromenumber/palindromenumber.go:3.31,5.11 1 1
+palindromenumber/palindromenumber.go:5.11,7.3 1 1
+palindromenumber/palindromenumber.go:9.2,10.12 2 1
+palindromenumber/palindromenumber.go:10.12,13.3 2 1
+palindromenumber/palindromenumber.go:15.2,15.40 1 1
+palindromenumber/palindromenumber.go:15.40,16.52 1 1
+palindromenumber/palindromenumber.go:16.52,18.4 1 1
+palindromenumber/palindromenumber.go:20.2,20.13 1 1
