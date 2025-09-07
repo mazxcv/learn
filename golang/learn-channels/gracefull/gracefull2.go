@@ -9,7 +9,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/mazxcv/custom-tcp-server/gracefull/closer"
+	"mazxcv.github.com/learn/golang/learn-channels/gracefull/closer"
 )
 
 const (
