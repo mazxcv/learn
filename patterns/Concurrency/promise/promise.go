@@ -8,53 +8,51 @@ type result[T any] struct {
 }
 
 type Promise[T any] struct {
-	resultCh chan result[T]
+	ch chan result[T]
 }
 
-func NewPromise[T any](asyncF func() (T, error)) Promise[T] {
-	promise := Promise[T]{
-		resultCh: make(chan result[T]),
+func NewPromise[T any](f func() (T, error)) *Promise[T] {
+	promise := &Promise[T]{
+		ch: make(chan result[T]),
 	}
 
 	go func() {
-		defer close(promise.resultCh)
+		defer close(promise.ch)
 
-		v, err := asyncF()
-		promise.resultCh <- result[T]{v: v, err: err}
+		v, err := f()
+		promise.ch <- result[T]{
+			v:   v,
+			err: err,
+		}
 	}()
 
 	return promise
 }
 
-func (p *Promise[T]) Then(successF func(T), errorF func(error)) {
-	go func() {
-		res := <-p.resultCh
-
-		if res.err != nil {
-			errorF(res.err)
+func (p *Promise[T]) Then(onSuccess func(T), onError func(error)) {
+	for r := range p.ch {
+		if r.err != nil {
+			onError(r.err)
 		} else {
-			successF(res.v)
+			onSuccess(r.v)
 		}
-
-	}()
+	}
 }
 
 func use() {
 	asyncJob := func() (string, error) {
-		time.Sleep(1 * time.Second)
+		time.Sleep(time.Millisecond * 100)
 
 		return "ok", nil
 	}
 
 	promise := NewPromise(asyncJob)
 	promise.Then(
-		func(v string) {
-			println("Success:", v)
+		func(result string) {
+			println(result)
 		},
 		func(err error) {
-			println("Error:", err.Error())
+			println(err)
 		},
 	)
-
-	time.Sleep(2 * time.Second)
 }
